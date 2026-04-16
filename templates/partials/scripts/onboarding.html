@@ -1,0 +1,191 @@
+<script>
+  (function () {
+    var body = document.body;
+    var splash = document.querySelector('[data-splash]');
+    var onboarding = document.querySelector('[data-onboarding]');
+    var openButtons = Array.from(document.querySelectorAll('[data-open-onboarding]'));
+    var onboardingClose = document.querySelector('[data-onboarding-close]');
+    var onboardingProgress = document.querySelector('[data-onboarding-progress]');
+    var stepLabel = document.querySelector('[data-step-label]');
+    var stepPanels = onboarding ? Array.from(onboarding.querySelectorAll('[data-step-panel]')) : [];
+    var leagueCards = onboarding ? Array.from(onboarding.querySelectorAll('.league-card')) : [];
+    var seasonCards = onboarding ? Array.from(onboarding.querySelectorAll('.season-card')) : [];
+    var stepNext = document.querySelector('[data-step-next]');
+    var stepBack = document.querySelector('[data-step-back]');
+    var selectionForm = onboarding ? onboarding.querySelector('.onboarding-form') : null;
+    var splashAlreadySeen = window.sessionStorage.getItem('datagol_splash_seen') === '1';
+    var onboardingRequired = body.dataset.onboardingRequired === '1';
+
+    function setOnboardingVisible(visible) {
+      if (!onboarding) {
+        return;
+      }
+      onboarding.classList.toggle('is-visible', visible);
+      body.classList.toggle('onboarding-active', visible);
+    }
+
+    function setOnboardingStep(stepNumber) {
+      if (!onboarding) {
+        return;
+      }
+
+      stepPanels.forEach(function (panel, index) {
+        var isActive = index === (stepNumber - 1);
+        panel.classList.toggle('is-active', isActive);
+        panel.classList.remove('is-leaving');
+      });
+
+      if (stepLabel) {
+        stepLabel.textContent = 'Paso ' + stepNumber + ' de 2';
+      }
+
+      if (onboardingProgress) {
+        onboardingProgress.classList.toggle('is-step-2', stepNumber === 2);
+      }
+    }
+
+    function syncCardState(card) {
+      var input = card.querySelector('input');
+      if (!input) {
+        return;
+      }
+      card.classList.toggle('is-selected', input.checked);
+    }
+
+    function syncAllCards() {
+      leagueCards.forEach(syncCardState);
+      seasonCards.forEach(syncCardState);
+    }
+
+    function selectedCount(cards) {
+      return cards.filter(function (card) {
+        var input = card.querySelector('input');
+        return input && input.checked;
+      }).length;
+    }
+
+    function animateStep(fromStep, toStep) {
+      var currentPanel = stepPanels[fromStep - 1];
+      var nextPanel = stepPanels[toStep - 1];
+
+      if (!currentPanel || !nextPanel) {
+        return;
+      }
+
+      currentPanel.classList.add('is-leaving');
+      window.setTimeout(function () {
+        currentPanel.classList.remove('is-active', 'is-leaving');
+        nextPanel.classList.add('is-active');
+        setOnboardingStep(toStep);
+      }, 200);
+    }
+
+    function openOnboarding() {
+      if (!onboarding) {
+        return;
+      }
+      syncAllCards();
+      setOnboardingStep(1);
+      setOnboardingVisible(true);
+    }
+
+    function closeOnboarding() {
+      if (!onboarding || onboardingRequired) {
+        return;
+      }
+      setOnboardingVisible(false);
+    }
+
+    if (splashAlreadySeen) {
+      body.classList.add('splash-done');
+      if (splash && splash.parentNode) {
+        splash.parentNode.removeChild(splash);
+      }
+    } else {
+      body.classList.add('splashing');
+    }
+
+    if (onboarding) {
+      syncAllCards();
+      stepPanels.forEach(function (panel, index) {
+        panel.classList.toggle('is-active', index === 0);
+      });
+
+      onboarding.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          var card = input.closest('[data-select-card]');
+          if (card) {
+            card.classList.toggle('is-selected', input.checked);
+          }
+        });
+      });
+
+      openButtons.forEach(function (button) {
+        button.addEventListener('click', openOnboarding);
+      });
+
+      if (onboardingClose) {
+        onboardingClose.addEventListener('click', closeOnboarding);
+      }
+
+      if (stepNext) {
+        stepNext.addEventListener('click', function () {
+          if (selectedCount(leagueCards) === 0) {
+            window.alert('Selecciona al menos una liga para continuar.');
+            return;
+          }
+          animateStep(1, 2);
+        });
+      }
+
+      if (stepBack) {
+        stepBack.addEventListener('click', function () {
+          animateStep(2, 1);
+        });
+      }
+
+      if (selectionForm) {
+        selectionForm.addEventListener('submit', function (event) {
+          if (selectedCount(leagueCards) === 0) {
+            event.preventDefault();
+            window.alert('Selecciona al menos una liga.');
+            return;
+          }
+          if (selectedCount(seasonCards) === 0) {
+            event.preventDefault();
+            window.alert('Selecciona al menos una temporada.');
+          }
+        });
+      }
+    }
+
+    if (!splashAlreadySeen) {
+      window.sessionStorage.setItem('datagol_splash_seen', '1');
+      window.setTimeout(function () {
+        if (splash) {
+          splash.classList.add('is-exiting');
+        }
+        window.setTimeout(function () {
+          if (splash) {
+            splash.classList.add('is-hidden');
+          }
+          body.classList.remove('splashing');
+          body.classList.add('splash-done');
+          if (onboardingRequired) {
+            openOnboarding();
+          }
+          window.setTimeout(function () {
+            if (splash && splash.parentNode) {
+              splash.parentNode.removeChild(splash);
+            }
+          }, 300);
+        }, 380);
+      }, 3000);
+    } else if (onboardingRequired) {
+      body.classList.add('splash-done');
+      openOnboarding();
+    } else {
+      body.classList.add('splash-done');
+    }
+  })();
+</script>

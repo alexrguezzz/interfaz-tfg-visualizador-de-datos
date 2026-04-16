@@ -1,0 +1,57 @@
+<section class="grid" data-view="home">
+  {% if rows %}
+    <article class="table-card">
+      <div class="head"><h2>Datos</h2></div>
+      <div class="body table-wrap">
+        <table>
+          <thead>
+            <tr>
+              {% for header in headers %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                {% for cell in row %}
+                  <td>
+                    {% if cell is mapping and cell.href %}
+                      <a class="table-link" href="{{ cell.href }}">{{ cell.text }}</a>
+                    {% else %}
+                      {{ cell }}
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  {% endif %}
+
+  {% if panels %}
+    <article class="panel">
+      <div class="head"><h3>{{ panels[0].title }}</h3></div>
+      <div class="body">
+        {% for panel in panels %}
+          {% if not loop.first %}<h3>{{ panel.title }}</h3>{% endif %}
+          {% if panel.kind == 'list' %}
+            <ul class="list">
+              {% for item in panel['items'] %}
+                <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          {% elif panel.kind == 'html' %}
+            {{ panel.html | safe }}
+          {% else %}
+            <p>{{ panel.text }}</p>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </article>
+  {% elif not rows %}
+    <article class="empty">Informacion no disponible</article>
+  {% endif %}
+</section>

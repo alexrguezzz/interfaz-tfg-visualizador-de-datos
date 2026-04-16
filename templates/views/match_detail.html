@@ -1,0 +1,29 @@
+<section class="grid" data-view="match-detail">
+  {% if panels %}
+    <article class="table-card">
+      <div class="head"><h2>Resumen</h2></div>
+      <div class="body">
+        <ul class="list">
+          {% for card in cards %}
+            <li><strong>{{ card.label }}:</strong> {{ card.value }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="head"><h3>{{ panels[0].title }}</h3></div>
+      <div class="body">
+        {% for panel in panels %}
+          {% if panel.kind == 'html' %}
+            {{ panel.html | safe }}
+          {% else %}
+            <p>{{ panel.text }}</p>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </article>
+  {% else %}
+    <article class="empty">Informacion no disponible</article>
+  {% endif %}
+</section>

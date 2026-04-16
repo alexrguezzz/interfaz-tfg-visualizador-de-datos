@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }}</title>
+  {% include "partials/page_head_assets.html" %}
+</head>
+<body data-onboarding-required="{{ 1 if onboarding_required else 0 }}">
+  <div class="splash-screen" data-splash>
+    <div class="splash-card" aria-label="DataGol">
+      <div class="splash-logo" aria-hidden="true">
+        <img src="{{ url_for('static', filename=brand_logo_path) }}" alt="">
+      </div>
+      <h1 class="splash-name">DataGol</h1>
+    </div>
+  </div>
+
+  <div class="onboarding-screen {% if onboarding_required %}is-visible{% endif %}" data-onboarding>
+    <div class="onboarding-card">
+      <header class="onboarding-header">
+        <div class="onboarding-brand">
+          <div class="onboarding-mark" aria-hidden="true">
+            <img src="{{ url_for('static', filename=brand_logo_path) }}" alt="">
+          </div>
+          <div>
+            <p class="onboarding-kicker">Seleccion inicial</p>
+            <h2 class="onboarding-title">Competiciones y temporadas</h2>
+          </div>
+        </div>
+        {% if not onboarding_required %}
+          <button type="button" class="btn ghost" data-onboarding-close>Cerrar</button>
+        {% endif %}
+      </header>
+
+      <div class="onboarding-progress" data-onboarding-progress>
+        <span class="onboarding-progress-label" data-step-label>Paso 1 de 2</span>
+        <div class="onboarding-progress-bar" aria-hidden="true"></div>
+      </div>
+
+      <form class="onboarding-form" method="post" action="{{ url_for('save_selection') }}">
+        <input type="hidden" name="next" value="{{ current_page_url }}">
+
+        <section class="onboarding-step is-active" data-step-panel="1">
+          <div class="onboarding-copy">
+            <h3>COMPETICIONES</h3>
+            <p>Selecciona las competiciones que quieres cargar. Puedes marcar una o varias.</p>
+          </div>
+
+          <div class="league-grid">
+            {% for league in onboarding.leagues %}
+              <label class="league-card {% if league.label in onboarding.selected_competitions %}is-selected{% endif %}" data-select-card>
+                <input type="checkbox" name="competitions" value="{{ league.label }}" {% if league.label in onboarding.selected_competitions %}checked{% endif %}>
+                <span class="league-mark" aria-hidden="true">
+                  <img src="{{ url_for('static', filename=league.logo) }}" alt="" onerror="this.style.display='none'; this.nextElementSibling.classList.add('is-visible');">
+                  <span class="league-fallback">{{ league.fallback }}</span>
+                </span>
+                <span class="league-name">{{ league.label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+
+          <div class="onboarding-actions">
+            <button type="button" class="btn primary" data-step-next>Continuar con temporadas</button>
+          </div>
+        </section>
+
+        <section class="onboarding-step" data-step-panel="2">
+          <div class="onboarding-copy">
+            <h3>TEMPORADAS</h3>
+            <p>Selecciona las temporadas que quieres cargar. Puedes marcar una o varias.</p>
+          </div>
+
+          <div class="season-grid">
+            {% for season in onboarding.seasons %}
+              <label class="season-card {% if season in onboarding.selected_seasons %}is-selected{% endif %}" data-select-card>
+                <input type="checkbox" name="seasons" value="{{ season }}" {% if season in onboarding.selected_seasons %}checked{% endif %}>
+                <span class="season-name">{{ season }}</span>
+                <span class="season-note">Temporada</span>
+              </label>
+            {% endfor %}
+          </div>
+
+          <div class="onboarding-actions">
+            <button type="button" class="btn ghost" data-step-back>Volver</button>
+            <button type="submit" class="btn primary">Guardar seleccion</button>
+          </div>
+        </section>
+      </form>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="onboarding-fab-anchor">
+      <button class="btn onboarding-fab" type="button" data-open-onboarding>Elegir base</button>
+    </div>
+
+    <header class="chrome">
+      <div class="top-stack">
+        <section class="navbar">
+          <a class="brand-wrap" href="{{ url_for('home') }}" aria-label="Ir a inicio">
+            <div class="logo" aria-hidden="true">
+              <img src="{{ url_for('static', filename=brand_logo_path) }}" alt="">
+            </div>
+            <div class="brand-copy">
+              <div class="brand">DataGol</div>
+              <div class="brand-sub">Football Data Intelligence</div>
+            </div>
+          </a>
+
+          <form class="search-wrap" method="get" action="{{ request.path }}">
+            <input class="search" type="text" name="q" value="{{ q }}" placeholder="Buscador global...">
+            {% if team_a %}<input type="hidden" name="team_a" value="{{ team_a }}">{% endif %}
+            {% if team_b %}<input type="hidden" name="team_b" value="{{ team_b }}">{% endif %}
+            {% if filter_state.competition != 'all' %}<input type="hidden" name="competition" value="{{ filter_state.competition }}">{% endif %}
+            {% if filter_state.season != 'all' %}<input type="hidden" name="season" value="{{ filter_state.season }}">{% endif %}
+            {% for jornada in filter_state.jornadas %}<input type="hidden" name="jornadas" value="{{ jornada }}">{% endfor %}
+            {% if filter_state.date_from %}<input type="hidden" name="date_from" value="{{ filter_state.date_from }}">{% endif %}
+            {% if filter_state.date_to %}<input type="hidden" name="date_to" value="{{ filter_state.date_to }}">{% endif %}
+          </form>
+
+          <nav class="nav" aria-label="Navegacion principal">
+            {% for item in nav_items %}
+              <a href="{{ item.href }}" class="{% if item.active %}active{% endif %}">{{ item.label }}</a>
+            {% endfor %}
+          </nav>
+
+          <button class="theme" type="button" data-theme-toggle aria-label="Cambiar tema">◐</button>
+        </section>
+
+        <section class="subbar">
+          <form class="filters" method="get" action="{{ request.path }}" data-filter-form>
+            {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+            {% if team_a %}<input type="hidden" name="team_a" value="{{ team_a }}">{% endif %}
+            {% if team_b %}<input type="hidden" name="team_b" value="{{ team_b }}">{% endif %}
+
+            <div class="field">
+              <label>Competicion</label>
+              <div class="dropdown" data-single-dropdown data-default-label="Todas">
+                <input type="hidden" name="competition" value="{{ filter_state.competition }}" data-value-input>
+                <button type="button" class="dropdown-trigger" data-trigger>
+                  <span data-dropdown-label>{% if filter_state.competition == 'all' %}Todas{% else %}{{ filter_state.competition }}{% endif %}</span>
+                  <span>▼</span>
+                </button>
+                <div class="dropdown-menu" data-menu>
+                  {% for option in competition_options %}
+                    <button type="button" class="check button {% if option == filter_state.competition %}is-selected{% endif %}" data-option value="{{ option }}">
+                      <span>{{ option if option != 'all' else 'Todas' }}</span>
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Temporada</label>
+              <div class="dropdown" data-single-dropdown data-default-label="Todas">
+                <input type="hidden" name="season" value="{{ filter_state.season }}" data-value-input>
+                <button type="button" class="dropdown-trigger" data-trigger>
+                  <span data-dropdown-label>{% if filter_state.season == 'all' %}Todas{% else %}{{ filter_state.season }}{% endif %}</span>
+                  <span>▼</span>
+                </button>
+                <div class="dropdown-menu" data-menu>
+                  {% for option in season_options %}
+                    <button type="button" class="check button {% if option == filter_state.season %}is-selected{% endif %}" data-option value="{{ option }}">
+                      <span>{{ option if option != 'all' else 'Todas' }}</span>
+                    </button>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Jornadas</label>
+              <div class="dropdown" data-dropdown>
+                <button type="button" class="dropdown-trigger" data-trigger>
+                  <span data-dropdown-label>Todas</span>
+                  <span>▼</span>
+                </button>
+                <div class="dropdown-menu" data-menu>
+                  <label class="check">
+                    <input type="checkbox" data-all>
+                    <span>Todas</span>
+                  </label>
+                  {% for jornada in jornadas_options %}
+                    <label class="check">
+                      <input type="checkbox" name="jornadas" value="{{ jornada }}" data-jornada {% if jornada in filter_state.jornadas %}checked{% endif %}>
+                      <span>Jornada {{ jornada }}</span>
+                    </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>Rango de fechas</label>
+              <div class="date-wrap">
+                <input type="date" name="date_from" value="{{ filter_state.date_from }}">
+                <input type="date" name="date_to" value="{{ filter_state.date_to }}">
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn primary" type="submit">Aplicar</button>
+              <a class="btn" href="{{ request.path }}">Limpiar</a>
+            </div>
+          </form>
+        </section>
+      </div>
+    </header>
+
+    <main class="main">
+      {% if current_section == 'home' %}
+        <div class="home-hero-logo" aria-hidden="true">
+          <img src="{{ url_for('static', filename=brand_logo_path) }}" alt="">
+        </div>
+      {% endif %}
+      <h1 class="title">{{ title }}</h1>
+      <p class="subtitle">{{ subtitle }}</p>
+
+      {% if error %}
+        <div class="error">{{ error }}</div>
+      {% endif %}
+
+      {% if cards %}
+        <section class="kpis">
+          {% for card in cards %}
+            <article class="kpi">
+              <div class="k">{{ card.label }}</div>
+              <div class="v">{{ card.value }}</div>
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
+
+      {% include "views/" ~ current_view ~ ".html" %}
+    </main>
+  </div>
+
+  {% include "partials/page_inline_script.html" %}
+</body>
+</html>

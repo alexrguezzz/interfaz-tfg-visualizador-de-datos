@@ -1,0 +1,245 @@
+<script>
+  (function () {
+    function drawPitchFrame(svg) {
+      var NS = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+
+      var width = 1000;
+      var height = 620;
+      var margin = 24;
+      var pitchW = width - (margin * 2);
+      var pitchH = height - (margin * 2);
+
+      var base = document.createElementNS(NS, 'rect');
+      base.setAttribute('x', String(margin));
+      base.setAttribute('y', String(margin));
+      base.setAttribute('width', String(pitchW));
+      base.setAttribute('height', String(pitchH));
+      base.setAttribute('fill', 'rgba(20, 120, 58, 0.24)');
+      base.setAttribute('stroke', '#e9f7ed');
+      base.setAttribute('stroke-width', '3');
+      svg.appendChild(base);
+
+      var midLine = document.createElementNS(NS, 'line');
+      midLine.setAttribute('x1', String(width / 2));
+      midLine.setAttribute('y1', String(margin));
+      midLine.setAttribute('x2', String(width / 2));
+      midLine.setAttribute('y2', String(height - margin));
+      midLine.setAttribute('stroke', '#e9f7ed');
+      midLine.setAttribute('stroke-width', '3');
+      svg.appendChild(midLine);
+
+      var centerCircle = document.createElementNS(NS, 'circle');
+      centerCircle.setAttribute('cx', String(width / 2));
+      centerCircle.setAttribute('cy', String(height / 2));
+      centerCircle.setAttribute('r', '74');
+      centerCircle.setAttribute('fill', 'none');
+      centerCircle.setAttribute('stroke', '#e9f7ed');
+      centerCircle.setAttribute('stroke-width', '3');
+      svg.appendChild(centerCircle);
+
+      var centerSpot = document.createElementNS(NS, 'circle');
+      centerSpot.setAttribute('cx', String(width / 2));
+      centerSpot.setAttribute('cy', String(height / 2));
+      centerSpot.setAttribute('r', '4');
+      centerSpot.setAttribute('fill', '#e9f7ed');
+      svg.appendChild(centerSpot);
+
+      function addBox(x, y, boxWidth, boxHeight) {
+        var rect = document.createElementNS(NS, 'rect');
+        rect.setAttribute('x', String(x));
+        rect.setAttribute('y', String(y));
+        rect.setAttribute('width', String(boxWidth));
+        rect.setAttribute('height', String(boxHeight));
+        rect.setAttribute('fill', 'none');
+        rect.setAttribute('stroke', '#e9f7ed');
+        rect.setAttribute('stroke-width', '3');
+        svg.appendChild(rect);
+      }
+
+      addBox(margin, margin + 118, 160, 360);
+      addBox(margin, margin + 188, 66, 220);
+      addBox(width - margin - 160, margin + 118, 160, 360);
+      addBox(width - margin - 66, margin + 188, 66, 220);
+
+      var leftPenalty = document.createElementNS(NS, 'circle');
+      leftPenalty.setAttribute('cx', String(margin + 112));
+      leftPenalty.setAttribute('cy', String(height / 2));
+      leftPenalty.setAttribute('r', '4');
+      leftPenalty.setAttribute('fill', '#e9f7ed');
+      svg.appendChild(leftPenalty);
+
+      var rightPenalty = document.createElementNS(NS, 'circle');
+      rightPenalty.setAttribute('cx', String(width - margin - 112));
+      rightPenalty.setAttribute('cy', String(height / 2));
+      rightPenalty.setAttribute('r', '4');
+      rightPenalty.setAttribute('fill', '#e9f7ed');
+      svg.appendChild(rightPenalty);
+
+      var layer = document.createElementNS(NS, 'g');
+      layer.setAttribute('data-event-layer', '1');
+      svg.appendChild(layer);
+    }
+
+    function renderPitchWidget(widget) {
+      var dataNode = widget.querySelector('[data-pitch-data]');
+      var svg = widget.querySelector('.pitch-svg');
+      var teamSelect = widget.querySelector('[data-pitch-team]');
+      var playerSelect = widget.querySelector('[data-pitch-player]');
+      var kindSelect = widget.querySelector('[data-pitch-kind]');
+      var summary = widget.querySelector('[data-pitch-summary]');
+      var events;
+
+      if (!dataNode || !svg || !teamSelect || !playerSelect || !kindSelect || !summary) {
+        return;
+      }
+
+      try {
+        events = JSON.parse(dataNode.textContent || '[]');
+      } catch (_error) {
+        events = [];
+      }
+
+      Array.from(new Set(events.map(function (item) {
+        return item.team || '';
+      }).filter(Boolean))).sort().forEach(function (team) {
+        var option = document.createElement('option');
+        option.value = team;
+        option.textContent = team;
+        teamSelect.appendChild(option);
+      });
+
+      function rebuildPlayers(selectedTeam) {
+        var current = playerSelect.value;
+        playerSelect.innerHTML = '<option value="all">Todos</option>';
+
+        Array.from(new Set(events.filter(function (item) {
+          if (!selectedTeam || selectedTeam === 'all') {
+            return true;
+          }
+          return (item.team || '') === selectedTeam;
+        }).map(function (item) {
+          return item.player || '';
+        }).filter(Boolean))).sort().forEach(function (player) {
+          var option = document.createElement('option');
+          option.value = player;
+          option.textContent = player;
+          playerSelect.appendChild(option);
+        });
+
+        if (current && Array.from(playerSelect.options).some(function (option) {
+          return option.value === current;
+        })) {
+          playerSelect.value = current;
+        }
+      }
+
+      function filterEvents() {
+        var teamValue = teamSelect.value;
+        var playerValue = playerSelect.value;
+        var kindValue = kindSelect.value;
+
+        return events.filter(function (item) {
+          if (teamValue !== 'all' && (item.team || '') !== teamValue) {
+            return false;
+          }
+          if (playerValue !== 'all' && (item.player || '') !== playerValue) {
+            return false;
+          }
+          if (kindValue === 'pass') {
+            return String(item.type || '').toLowerCase() === 'pass';
+          }
+          if (kindValue === 'shot') {
+            return item.is_shot === true;
+          }
+          return true;
+        });
+      }
+
+      function toPxX(value) {
+        return 24 + ((Number(value) / 100) * (1000 - 48));
+      }
+
+      function toPxY(value) {
+        return 24 + ((Number(value) / 100) * (620 - 48));
+      }
+
+      function drawEvents(items) {
+        var NS = 'http://www.w3.org/2000/svg';
+        var passCount = 0;
+        var shotCount = 0;
+
+        drawPitchFrame(svg);
+
+        var layer = svg.querySelector('[data-event-layer]');
+        if (!layer) {
+          return;
+        }
+
+        items.forEach(function (item) {
+          var isPass = String(item.type || '').toLowerCase() === 'pass';
+          var isShot = item.is_shot === true;
+          var startX = toPxX(item.x);
+          var startY = toPxY(item.y);
+          var endX = item.end_x === null || item.end_x === undefined ? null : toPxX(item.end_x);
+          var endY = item.end_y === null || item.end_y === undefined ? null : toPxY(item.end_y);
+
+          if (isPass && endX !== null && endY !== null) {
+            passCount += 1;
+            var passLine = document.createElementNS(NS, 'line');
+            passLine.setAttribute('x1', String(startX));
+            passLine.setAttribute('y1', String(startY));
+            passLine.setAttribute('x2', String(endX));
+            passLine.setAttribute('y2', String(endY));
+            passLine.setAttribute('stroke', 'rgba(91, 196, 255, 0.82)');
+            passLine.setAttribute('stroke-width', '2.1');
+            passLine.setAttribute('stroke-linecap', 'round');
+            layer.appendChild(passLine);
+          }
+
+          if (isShot) {
+            shotCount += 1;
+
+            if (endX !== null && endY !== null) {
+              var shotLine = document.createElementNS(NS, 'line');
+              shotLine.setAttribute('x1', String(startX));
+              shotLine.setAttribute('y1', String(startY));
+              shotLine.setAttribute('x2', String(endX));
+              shotLine.setAttribute('y2', String(endY));
+              shotLine.setAttribute('stroke', 'rgba(255, 99, 71, 0.92)');
+              shotLine.setAttribute('stroke-width', '2.8');
+              shotLine.setAttribute('stroke-linecap', 'round');
+              layer.appendChild(shotLine);
+            }
+
+            var marker = document.createElementNS(NS, 'circle');
+            marker.setAttribute('cx', String(startX));
+            marker.setAttribute('cy', String(startY));
+            marker.setAttribute('r', '3.4');
+            marker.setAttribute('fill', 'rgba(255, 82, 48, 0.95)');
+            layer.appendChild(marker);
+          }
+        });
+
+        summary.textContent = 'Eventos visibles: ' + items.length + ' | Pases: ' + passCount + ' | Tiros: ' + shotCount;
+      }
+
+      function refresh() {
+        rebuildPlayers(teamSelect.value);
+        drawEvents(filterEvents());
+      }
+
+      teamSelect.addEventListener('change', refresh);
+      playerSelect.addEventListener('change', function () {
+        drawEvents(filterEvents());
+      });
+      kindSelect.addEventListener('change', function () {
+        drawEvents(filterEvents());
+      });
+
+      refresh();
+    }
+
+    document.querySelectorAll('[data-pitch-widget]').forEach(renderPitchWidget);
+  })();
+</script>

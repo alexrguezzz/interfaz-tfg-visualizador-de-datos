@@ -1,0 +1,14 @@
+<script>
+  (function () {
+    var root = document.documentElement;
+    var storedTheme = window.localStorage.getItem('theme');
+
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      root.dataset.theme = storedTheme;
+    }
+
+    if (window.sessionStorage.getItem('datagol_splash_seen') === '1') {
+      root.classList.add('skip-splash');
+    }
+  })();
+</script>

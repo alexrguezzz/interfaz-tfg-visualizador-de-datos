@@ -1,0 +1,45 @@
+<section class="compare-layout" data-view="compare">
+  <article class="compare-card">
+    <div class="head"><h2>Comparador</h2></div>
+    <div class="body">
+      <form method="get" action="{{ url_for('compare') }}" class="compare-form">
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        {% if filter_state.competition != 'all' %}<input type="hidden" name="competition" value="{{ filter_state.competition }}">{% endif %}
+        {% if filter_state.season != 'all' %}<input type="hidden" name="season" value="{{ filter_state.season }}">{% endif %}
+        {% for jornada in filter_state.jornadas %}<input type="hidden" name="jornadas" value="{{ jornada }}">{% endfor %}
+        {% if filter_state.date_from %}<input type="hidden" name="date_from" value="{{ filter_state.date_from }}">{% endif %}
+        {% if filter_state.date_to %}<input type="hidden" name="date_to" value="{{ filter_state.date_to }}">{% endif %}
+
+        <select name="team_a">
+          <option value="">Equipo A</option>
+          {% for option in team_options %}
+            <option value="{{ option }}" {% if option == team_a %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+
+        <select name="team_b">
+          <option value="">Equipo B</option>
+          {% for option in team_options %}
+            <option value="{{ option }}" {% if option == team_b %}selected{% endif %}>{{ option }}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit">Comparar</button>
+      </form>
+    </div>
+  </article>
+
+  {% if compare_cards %}
+    <section class="compare-cards">
+      {% for card in compare_cards %}
+        <article class="kpi">
+          <div class="k">{{ card.label }}</div>
+          <div class="v">{{ card.value }}</div>
+          {% if card.extra %}<div>{{ card.extra }}</div>{% endif %}
+        </article>
+      {% endfor %}
+    </section>
+  {% else %}
+    <article class="empty">Informacion no disponible</article>
+  {% endif %}
+</section>
