@@ -127,7 +127,7 @@ def register_matches_routes(app, deps) -> None:
             events_rows = run_query(
                 prefixes
                 + f"""
-                SELECT ?event ?teamLabel ?playerLabel ?type ?outcomeType ?isShot ?x ?y ?endX ?endY
+                SELECT ?event ?teamLabel ?playerLabel ?type ?outcomeType ?isShot ?isGoal ?minute ?x ?y ?endX ?endY ?goalMouthY ?goalMouthZ
                 WHERE {{
                   BIND({sparql_iri(match_uri)} AS ?m)
                   ?m a class:Match ; prop:hasEvent ?event .
@@ -140,8 +140,12 @@ def register_matches_routes(app, deps) -> None:
                   OPTIONAL {{ ?event prop:eventType ?type . }}
                   OPTIONAL {{ ?event prop:outcomeType ?outcomeType . }}
                   OPTIONAL {{ ?event prop:isShot ?isShot . }}
+                  OPTIONAL {{ ?event prop:isGoal ?isGoal . }}
+                  OPTIONAL {{ ?event prop:eventMinute ?minute . }}
                   OPTIONAL {{ ?event prop:endX ?endX . }}
                   OPTIONAL {{ ?event prop:endY ?endY . }}
+                  OPTIONAL {{ ?event prop:goalMouthY ?goalMouthY . }}
+                  OPTIONAL {{ ?event prop:goalMouthZ ?goalMouthZ . }}
                 }}
                 ORDER BY ?event
                 """
@@ -157,19 +161,24 @@ def register_matches_routes(app, deps) -> None:
 
                 events_payload.append(
                     {
+                        "event_id": item.get("event", ""),
                         "team": item.get("teamLabel", ""),
                         "player": item.get("playerLabel", ""),
                         "type": item.get("type", ""),
                         "outcome_type": item.get("outcomeType", ""),
                         "is_shot": safe_bool(item.get("isShot", "")),
+                        "is_goal": safe_bool(item.get("isGoal", "")),
+                        "minute": int(float(item["minute"])) if item.get("minute", "") not in {"", None} else None,
                         "x": x_val,
                         "y": y_val,
                         "end_x": float(item["endX"]) if item.get("endX", "") not in {"", None} else None,
                         "end_y": float(item["endY"]) if item.get("endY", "") not in {"", None} else None,
+                        "goal_mouth_y": float(item["goalMouthY"]) if item.get("goalMouthY", "") not in {"", None} else None,
+                        "goal_mouth_z": float(item["goalMouthZ"]) if item.get("goalMouthZ", "") not in {"", None} else None,
                     }
                 )
 
-            panels = [build_match_pitch_panel(events_payload)]
+            panels = build_match_pitch_panel(events_payload)
 
             return render_page(
                 "matches",

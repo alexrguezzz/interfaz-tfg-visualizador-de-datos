@@ -320,6 +320,153 @@
     font-weight: 700;
   }
 
+  .match-detail-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .match-detail-grid .body {
+    padding: 16px;
+  }
+
+  .event-widget {
+    display: grid;
+    gap: 14px;
+  }
+
+  .event-note {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .event-toolbar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .event-field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .event-field span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .event-field select {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--chip) 94%, white 6%), var(--chip));
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .shot-panel {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line-soft);
+    border-radius: 16px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 92%, white 8%), color-mix(in srgb, var(--chip) 86%, white 14%));
+  }
+
+  .shot-panel-head {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .shot-panel-head h4 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .shot-panel-head p {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .shot-legend {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .shot-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid var(--line-soft);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--panel) 90%, white 10%);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .shot-legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+    flex: 0 0 auto;
+  }
+
+  .shot-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.95fr);
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .shot-map-wrap,
+  .shot-goal-wrap {
+    width: 100%;
+    border: 1px solid var(--line-soft);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .shot-map-wrap {
+    background: linear-gradient(180deg, rgba(29, 105, 52, 0.96), rgba(18, 80, 40, 0.98));
+  }
+
+  .shot-goal-wrap {
+    background: linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(236, 242, 248, 0.98));
+  }
+
+  .shot-pitch-svg,
+  .shot-goal-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .shot-detail {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    min-height: 18px;
+  }
+
   .empty,
   .error {
     padding: 14px;
@@ -341,7 +488,12 @@
   @media (max-width: 780px) {
     .grid,
     .compare-form,
-    .pitch-toolbar {
+    .pitch-toolbar,
+    .event-toolbar {
+      grid-template-columns: 1fr;
+    }
+
+    .shot-layout {
       grid-template-columns: 1fr;
     }
 

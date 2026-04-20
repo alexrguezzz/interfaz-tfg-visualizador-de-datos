@@ -179,44 +179,100 @@ def build_elo_panel(*, run_query, prefixes: str, sparql_string, team_labels: lis
     }
 
 
-def build_match_pitch_panel(events: list[dict[str, object]]) -> dict[str, object]:
-    events_json = json.dumps(events, ensure_ascii=True).replace("</", "<\\/")
-    pitch_html = f"""
-    <div class="pitch-widget" data-pitch-widget>
-        <div class="pitch-toolbar">
-            <label class="pitch-field">
+def build_match_pitch_panel(events: list[dict[str, object]]) -> list[dict[str, object]]:
+    pass_events = [item for item in events if str(item.get("type", "")).lower() == "pass"]
+    shot_events = [item for item in events if item.get("is_shot") is True]
+
+    pass_events_json = json.dumps(pass_events, ensure_ascii=True).replace("</", "<\\/")
+    shot_events_json = json.dumps(shot_events, ensure_ascii=True).replace("</", "<\\/")
+
+    pass_html = f"""
+    <div class="event-widget pass-widget" data-pass-widget>
+        <p class="event-note">Campo completo de pases con filtros independientes por equipo, jugador y resultado.</p>
+        <div class="event-toolbar">
+            <label class="event-field">
                 <span>Equipo</span>
-                <select data-pitch-team>
+                <select data-pass-team>
                     <option value="all">Todos</option>
                 </select>
             </label>
-            <label class="pitch-field">
+            <label class="event-field">
                 <span>Jugador</span>
-                <select data-pitch-player>
+                <select data-pass-player>
                     <option value="all">Todos</option>
                 </select>
             </label>
-            <label class="pitch-field">
-                <span>Tipo</span>
-                <select data-pitch-kind>
+            <label class="event-field">
+                <span>Resultado</span>
+                <select data-pass-outcome>
                     <option value="all">Todos</option>
-                    <option value="pass">Pase</option>
-                    <option value="shot">Tiro</option>
+                    <option value="completed">Completado</option>
+                    <option value="failed">Fallido</option>
                 </select>
             </label>
         </div>
-        <div class="pitch-wrap">
-            <svg class="pitch-svg" viewBox="0 0 1000 620" role="img" aria-label="Eventos del partido"></svg>
+        <div class="pitch-wrap pitch-wrap-large">
+            <svg class="pass-pitch-svg" viewBox="0 0 1000 620" role="img" aria-label="Mapa de pases"></svg>
         </div>
-        <p class="pitch-summary" data-pitch-summary></p>
-        <script type="application/json" data-pitch-data>{events_json}</script>
+        <p class="pitch-summary" data-pass-summary></p>
+        <script type="application/json" data-pass-data>{pass_events_json}</script>
     </div>
     """
-    return {
-        "title": "Campo de futbol - eventos",
-        "kind": "html",
-        "html": pitch_html,
-    }
+
+    shot_html = f"""
+    <div class="event-widget shot-widget" data-shot-widget>
+        <div class="shot-panel-head">
+            <p class="event-note">Media cancha en ataque y porteria de destino para el disparo seleccionado.</p>
+            <div class="shot-legend" data-shot-legend></div>
+        </div>
+        <div class="event-toolbar">
+            <label class="event-field">
+                <span>Equipo</span>
+                <select data-shot-team>
+                    <option value="all">Todos</option>
+                </select>
+            </label>
+            <label class="event-field">
+                <span>Jugador</span>
+                <select data-shot-player>
+                    <option value="all">Todos</option>
+                </select>
+            </label>
+            <label class="event-field">
+                <span>Resultado</span>
+                <select data-shot-result>
+                    <option value="all">Todos</option>
+                    <option value="goals">Gol</option>
+                    <option value="non_goals">No gol</option>
+                </select>
+            </label>
+        </div>
+        <div class="shot-layout">
+            <div class="shot-map-wrap">
+                <svg class="shot-pitch-svg" viewBox="0 0 520 620" role="img" aria-label="Mapa de disparos"></svg>
+            </div>
+            <div class="shot-goal-wrap">
+                <svg class="shot-goal-svg" viewBox="0 0 320 380" role="img" aria-label="Porteria del disparo seleccionado"></svg>
+            </div>
+        </div>
+        <p class="pitch-summary" data-shot-summary></p>
+        <p class="shot-detail" data-shot-detail>Selecciona un disparo para ver su objetivo en la porteria.</p>
+        <script type="application/json" data-shot-data>{shot_events_json}</script>
+    </div>
+    """
+
+    return [
+        {
+            "title": "Mapa de pases",
+            "kind": "html",
+            "html": pass_html,
+        },
+        {
+            "title": "Mapa de disparos",
+            "kind": "html",
+            "html": shot_html,
+        },
+    ]
 
 
 def render_page_factory(
