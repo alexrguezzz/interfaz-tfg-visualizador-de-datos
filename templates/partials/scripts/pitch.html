@@ -1,6 +1,48 @@
 <script>
   (function () {
-    function drawPitchFrame(svg) {
+    var pitchWidgetCounter = 0;
+
+    function createArrowMarker(id, color) {
+      var NS = 'http://www.w3.org/2000/svg';
+      var marker = document.createElementNS(NS, 'marker');
+      marker.setAttribute('id', id);
+      marker.setAttribute('markerWidth', '12');
+      marker.setAttribute('markerHeight', '12');
+      marker.setAttribute('refX', '10');
+      marker.setAttribute('refY', '6');
+      marker.setAttribute('orient', 'auto');
+      marker.setAttribute('markerUnits', 'userSpaceOnUse');
+
+      var arrow = document.createElementNS(NS, 'path');
+      arrow.setAttribute('d', 'M 0 0 L 10 6 L 0 12 z');
+      arrow.setAttribute('fill', color);
+      marker.appendChild(arrow);
+
+      return marker;
+    }
+
+    function getPassStyle(item, markerIds) {
+      var outcome = String(item.outcome_type || '').toLowerCase();
+      var isFailed = outcome.indexOf('unsuccess') !== -1
+        || outcome.indexOf('fail') !== -1
+        || outcome.indexOf('incomplete') !== -1
+        || outcome.indexOf('inaccurate') !== -1
+        || outcome.indexOf('error') !== -1;
+
+      if (isFailed) {
+        return {
+          color: 'rgba(229, 83, 83, 0.92)',
+          marker: 'url(#' + markerIds.failed + ')'
+        };
+      }
+
+      return {
+        color: 'rgba(78, 200, 112, 0.92)',
+        marker: 'url(#' + markerIds.success + ')'
+      };
+    }
+
+    function drawPitchFrame(svg, markerIds) {
       var NS = 'http://www.w3.org/2000/svg';
       svg.innerHTML = '';
 
@@ -9,6 +51,11 @@
       var margin = 24;
       var pitchW = width - (margin * 2);
       var pitchH = height - (margin * 2);
+
+      var defs = document.createElementNS(NS, 'defs');
+      defs.appendChild(createArrowMarker(markerIds.success, 'rgba(78, 200, 112, 0.92)'));
+      defs.appendChild(createArrowMarker(markerIds.failed, 'rgba(229, 83, 83, 0.92)'));
+      svg.appendChild(defs);
 
       var base = document.createElementNS(NS, 'rect');
       base.setAttribute('x', String(margin));
@@ -89,6 +136,11 @@
       var kindSelect = widget.querySelector('[data-pitch-kind]');
       var summary = widget.querySelector('[data-pitch-summary]');
       var events;
+      var widgetId = String(pitchWidgetCounter += 1);
+      var markerIds = {
+        success: 'pitch-pass-arrow-success-' + widgetId,
+        failed: 'pitch-pass-arrow-failed-' + widgetId
+      };
 
       if (!dataNode || !svg || !teamSelect || !playerSelect || !kindSelect || !summary) {
         return;
@@ -169,7 +221,7 @@
         var passCount = 0;
         var shotCount = 0;
 
-        drawPitchFrame(svg);
+        drawPitchFrame(svg, markerIds);
 
         var layer = svg.querySelector('[data-event-layer]');
         if (!layer) {
@@ -186,15 +238,26 @@
 
           if (isPass && endX !== null && endY !== null) {
             passCount += 1;
+            var passStyle = getPassStyle(item, markerIds);
             var passLine = document.createElementNS(NS, 'line');
             passLine.setAttribute('x1', String(startX));
             passLine.setAttribute('y1', String(startY));
             passLine.setAttribute('x2', String(endX));
             passLine.setAttribute('y2', String(endY));
-            passLine.setAttribute('stroke', 'rgba(91, 196, 255, 0.82)');
-            passLine.setAttribute('stroke-width', '2.1');
+            passLine.setAttribute('stroke', passStyle.color);
+            passLine.setAttribute('stroke-width', '2.4');
             passLine.setAttribute('stroke-linecap', 'round');
+            passLine.setAttribute('marker-end', passStyle.marker);
             layer.appendChild(passLine);
+
+            var passOrigin = document.createElementNS(NS, 'circle');
+            passOrigin.setAttribute('cx', String(startX));
+            passOrigin.setAttribute('cy', String(startY));
+            passOrigin.setAttribute('r', '4');
+            passOrigin.setAttribute('fill', passStyle.color);
+            passOrigin.setAttribute('stroke', 'rgba(248, 255, 249, 0.95)');
+            passOrigin.setAttribute('stroke-width', '1.2');
+            layer.appendChild(passOrigin);
           }
 
           if (isShot) {

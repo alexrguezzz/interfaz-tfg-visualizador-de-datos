@@ -127,7 +127,7 @@ def register_matches_routes(app, deps) -> None:
             events_rows = run_query(
                 prefixes
                 + f"""
-                SELECT ?event ?teamLabel ?playerLabel ?type ?isShot ?x ?y ?endX ?endY
+                SELECT ?event ?teamLabel ?playerLabel ?type ?outcomeType ?isShot ?x ?y ?endX ?endY
                 WHERE {{
                   BIND({sparql_iri(match_uri)} AS ?m)
                   ?m a class:Match ; prop:hasEvent ?event .
@@ -138,6 +138,7 @@ def register_matches_routes(app, deps) -> None:
 
                   OPTIONAL {{ ?event prop:correspondsToPlayer ?player . ?player rdfs:label ?playerLabel . }}
                   OPTIONAL {{ ?event prop:eventType ?type . }}
+                  OPTIONAL {{ ?event prop:outcomeType ?outcomeType . }}
                   OPTIONAL {{ ?event prop:isShot ?isShot . }}
                   OPTIONAL {{ ?event prop:endX ?endX . }}
                   OPTIONAL {{ ?event prop:endY ?endY . }}
@@ -159,6 +160,7 @@ def register_matches_routes(app, deps) -> None:
                         "team": item.get("teamLabel", ""),
                         "player": item.get("playerLabel", ""),
                         "type": item.get("type", ""),
+                        "outcome_type": item.get("outcomeType", ""),
                         "is_shot": safe_bool(item.get("isShot", "")),
                         "x": x_val,
                         "y": y_val,
